@@ -1,0 +1,67 @@
+{
+  "name": "@yumyums/ui",
+  "version": "1.0.0",
+  "description": "General-purpose React design-system primitives (buttons, sliders, badges, spinner) plus YumYumPlayerView — reusable, framework-agnostic video-player chrome.",
+  "author": "Vokinlemxela",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "README.ru.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Vokinlemxela/yumyums-ui.git"
+  },
+  "homepage": "https://github.com/Vokinlemxela/yumyums-ui#readme",
+  "bugs": "https://github.com/Vokinlemxela/yumyums-ui/issues",
+  "keywords": [
+    "react",
+    "design-system",
+    "ui",
+    "components",
+    "video-player",
+    "player-ui",
+    "yumyum"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0 || ^19.0.0",
+    "react-dom": "^18.2.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@testing-library/react": "^16.1.0",
+    "@testing-library/dom": "^10.4.0",
+    "jsdom": "^25.0.1",
+    "vitest": "^4.1.8",
+    "typescript": "^5.4.5"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
