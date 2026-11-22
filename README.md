@@ -388,6 +388,8 @@ YumYumPlayerViewProps, PlayerHandle, PlayerControlKey
 
 ## Developing and releasing the UI library
 
+[Component audit and development roadmap](./ROADMAP.md)
+
 This repository contains the source for `@yumyums/ui`. The shared components depend on React and React DOM. To use the player controls with a playback engine, pass a stable `createPlayer` factory to `YumYumPlayerView`. The factory returns an object implementing `PlayerHandle`.
 
 Clone this repository and run the checks from its root. These commands also work in a checkout that has no other YumYums projects alongside it.
