@@ -23,6 +23,11 @@
       "types": "./dist/player.d.ts",
       "import": "./dist/player.js",
       "default": "./dist/player.js"
+    },
+    "./primitives/styles": {
+      "types": "./dist/primitivesStyles.d.ts",
+      "import": "./dist/primitivesStyles.js",
+      "default": "./dist/primitivesStyles.js"
     }
   },
   "files": [

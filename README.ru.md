@@ -64,7 +64,7 @@ function Panel() {
       </Select>
 
       <Toggle checked={notify} onChange={setNotify} aria-label="Уведомления" />
-      <Slider value={volume} onChange={setVolume} />
+      <Slider aria-label="Громкость" value={volume} onChange={setVolume} />
 
       <Button variant="primary" onClick={save}>Сохранить</Button>
       <Button variant="ghost">Отмена</Button>
@@ -99,10 +99,16 @@ export function Player({ url }: { url: string }) {
 
 ## Стили и темизация
 
-Стили лежат **внутри компонентов**. При первом рендере каждый примитив вызывает
-идемпотентный `ensureStyles()`, который добавляет один
-`<style id="yyp-primitives-styles">` в `<head>`. Ничего импортировать и
-настраивать в сборщике не нужно.
+В браузере компоненты подключают общую таблицу стилей. Чтобы стили
+применялись до гидратации, добавьте ту же таблицу в `<head>` серверной
+страницы. В браузере компоненты найдут её по ID.
+
+```tsx
+import { primitivesCss, primitivesStyleId } from '@yumyums/ui/primitives/styles';
+
+// Inside the document head
+<style id={primitivesStyleId}>{primitivesCss}</style>
+```
 
 Темизация — целиком через **CSS-переменные** с префиксом `--yyp-*`. У каждого
 токена есть разумный тёмный дефолт (палитра yumyums), поэтому библиотека
@@ -259,16 +265,16 @@ export function Player({ url }: { url: string }) {
 Клавиатура: стрелки (±step), Shift+стрелка (±10·step), Home/End.
 
 ```tsx
-<Slider value={volume} onChange={setVolume} min={0} max={100} step={5} />
+<Slider aria-label="Громкость" value={volume} onChange={setVolume} min={0} max={100} step={5} />
 ```
 
 ### `Spinner`
 
-Индетерминантный спиннер загрузки (`role="status"`), цвет — `--yyp-accent`. Без
-пропов.
+Индикатор загрузки с `role="status"` и цветом `--yyp-accent`. Размер по
+умолчанию 40 пикселей, доступное имя по умолчанию — `Loading...`.
 
 ```tsx
-{loading && <Spinner />}
+{loading && <Spinner size={24} aria-label="Загрузка результатов" />}
 ```
 
 ---
@@ -379,7 +385,7 @@ Badge, Button, Slider, Spinner, Input, Checkbox, Toggle, Select, TextArea,
 YumYumPlayerView
 
 // Типы
-BadgeProps, ButtonProps, SliderProps, InputProps, CheckboxProps, ToggleProps,
+BadgeProps, ButtonProps, SliderProps, SpinnerProps, InputProps, CheckboxProps, ToggleProps,
 SelectProps, TextAreaProps,
 YumYumPlayerViewProps, PlayerHandle, PlayerControlKey
 ```

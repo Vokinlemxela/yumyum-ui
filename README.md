@@ -65,7 +65,7 @@ function Panel() {
       </Select>
 
       <Toggle checked={notify} onChange={setNotify} aria-label="Notifications" />
-      <Slider value={volume} onChange={setVolume} />
+      <Slider aria-label="Volume" value={volume} onChange={setVolume} />
 
       <Button variant="primary" onClick={save}>Save</Button>
       <Button variant="ghost">Cancel</Button>
@@ -100,10 +100,16 @@ export function Player({ url }: { url: string }) {
 
 ## Styling & theming
 
-Styles ship **inside the components**. On first render each primitive calls an
-idempotent `ensureStyles()` that appends a single
-`<style id="yyp-primitives-styles">` to `<head>`. There is nothing to import and
-nothing to configure in your bundler.
+The primitives install a shared stylesheet in the browser. To style
+server-rendered HTML before hydration, place the same stylesheet in the
+initial document head. The browser reuses it by ID.
+
+```tsx
+import { primitivesCss, primitivesStyleId } from '@yumyums/ui/primitives/styles';
+
+// Inside <head>
+<style id={primitivesStyleId}>{primitivesCss}</style>
+```
 
 Theming is done entirely through **CSS custom properties** prefixed `--yyp-*`.
 Every token has a sensible dark default (the yumyums palette), so the library
@@ -262,16 +268,16 @@ Pointer + keyboard slider (`role="slider"`). Controlled.
 Keyboard: arrows (±step), Shift+arrow (±10·step), Home/End.
 
 ```tsx
-<Slider value={volume} onChange={setVolume} min={0} max={100} step={5} />
+<Slider aria-label="Volume" value={volume} onChange={setVolume} min={0} max={100} step={5} />
 ```
 
 ### `Spinner`
 
-Indeterminate loading spinner (`role="status"`), colored by `--yyp-accent`. No
-props.
+Loading indicator with `role="status"`. It uses `--yyp-accent` and defaults
+to 40 pixels and the accessible name `Loading...`.
 
 ```tsx
-{loading && <Spinner />}
+{loading && <Spinner size={24} aria-label="Loading results" />}
 ```
 
 ---
@@ -383,7 +389,7 @@ Badge, Button, Slider, Spinner, Input, Checkbox, Toggle, Select, TextArea,
 YumYumPlayerView
 
 // Types
-BadgeProps, ButtonProps, SliderProps, InputProps, CheckboxProps, ToggleProps,
+BadgeProps, ButtonProps, SliderProps, SpinnerProps, InputProps, CheckboxProps, ToggleProps,
 SelectProps, TextAreaProps,
 YumYumPlayerViewProps, PlayerHandle, PlayerControlKey
 ```
