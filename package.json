@@ -1,7 +1,7 @@
 {
   "name": "@yumyums/ui",
   "version": "1.0.0",
-  "description": "General-purpose React design-system primitives (buttons, sliders, badges, spinner) plus YumYumPlayerView — reusable, framework-agnostic video-player chrome.",
+  "description": "General-purpose React design-system primitives (buttons, sliders, badges, spinner) plus YumYumPlayerView \u2014 reusable, framework-agnostic video-player chrome.",
   "author": "Vokinlemxela",
   "license": "MIT",
   "type": "module",
@@ -13,6 +13,16 @@
       "import": "./dist/index.js",
       "require": "./dist/index.js",
       "default": "./dist/index.js"
+    },
+    "./primitives": {
+      "types": "./dist/primitives.d.ts",
+      "import": "./dist/primitives.js",
+      "default": "./dist/primitives.js"
+    },
+    "./player": {
+      "types": "./dist/player.d.ts",
+      "import": "./dist/player.js",
+      "default": "./dist/player.js"
     }
   },
   "files": [
@@ -25,10 +35,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Vokinlemxela/yumyums-ui.git"
+    "url": "git+https://github.com/Vokinlemxela/yumyum-ui.git"
   },
-  "homepage": "https://github.com/Vokinlemxela/yumyums-ui#readme",
-  "bugs": "https://github.com/Vokinlemxela/yumyums-ui/issues",
+  "homepage": "https://github.com/Vokinlemxela/yumyum-ui#readme",
+  "bugs": "https://github.com/Vokinlemxela/yumyum-ui/issues",
   "keywords": [
     "react",
     "design-system",

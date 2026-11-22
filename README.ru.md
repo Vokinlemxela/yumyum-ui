@@ -47,7 +47,7 @@ npm install @yumyums/ui
 ### Примитивы
 
 ```tsx
-import { Button, Badge, Input, Toggle, Select, Slider } from '@yumyums/ui';
+import { Button, Badge, Input, Toggle, Select, Slider } from '@yumyums/ui/primitives';
 
 function Panel() {
   const [notify, setNotify] = useState(true);
@@ -79,7 +79,7 @@ function Panel() {
 ### Плеер-view
 
 ```tsx
-import { YumYumPlayerView } from '@yumyums/ui';
+import { YumYumPlayerView } from '@yumyums/ui/player';
 import { YumYumPlayer } from '@yumyum-player/core';
 import { useCallback } from 'react';
 
@@ -371,6 +371,8 @@ interface PlayerHandle {
 
 ## Экспорты
 
+Общие контролы доступны через `@yumyums/ui/primitives`, видеооболочка и её типы — через `@yumyums/ui/player`. Корневая точка входа по-прежнему экспортирует и то, и другое.
+
 ```ts
 // Компоненты
 Badge, Button, Slider, Spinner, Input, Checkbox, Toggle, Select, TextArea,
@@ -391,8 +393,8 @@ YumYumPlayerViewProps, PlayerHandle, PlayerControlKey
 Склонируйте репозиторий и запустите проверки из его корня. Для этих команд достаточно отдельной копии библиотеки.
 
 ```sh
-git clone https://github.com/Vokinlemxela/yumyums-ui.git
-cd yumyums-ui
+git clone https://github.com/Vokinlemxela/yumyum-ui.git
+cd yumyum-ui
 npm ci
 npm run typecheck
 npm test

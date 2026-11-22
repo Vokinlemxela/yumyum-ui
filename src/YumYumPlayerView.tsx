@@ -1,6 +1,6 @@
 "use client";
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Badge, Button, Slider, Spinner } from './index.js';
+import { Badge, Button, Slider, Spinner } from './primitives.js';
 
 // ====================================================================
 // YumYumPlayerView — reusable, YouTube-style chrome around a YumYumPlayer

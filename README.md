@@ -48,7 +48,7 @@ utilitarian, function-first:
 ### Primitives
 
 ```tsx
-import { Button, Badge, Input, Toggle, Select, Slider } from '@yumyums/ui';
+import { Button, Badge, Input, Toggle, Select, Slider } from '@yumyums/ui/primitives';
 
 function Panel() {
   const [notify, setNotify] = useState(true);
@@ -80,7 +80,7 @@ once on first mount.
 ### Player view
 
 ```tsx
-import { YumYumPlayerView } from '@yumyums/ui';
+import { YumYumPlayerView } from '@yumyums/ui/player';
 import { YumYumPlayer } from '@yumyum-player/core';
 import { useCallback } from 'react';
 
@@ -375,6 +375,8 @@ interface PlayerHandle {
 
 ## Exports
 
+Use `@yumyums/ui/primitives` for shared controls and `@yumyums/ui/player` for the video view and its types. The root entry point continues to export both.
+
 ```ts
 // Components
 Badge, Button, Slider, Spinner, Input, Checkbox, Toggle, Select, TextArea,
@@ -395,8 +397,8 @@ This repository contains the source for `@yumyums/ui`. The shared components dep
 Clone this repository and run the checks from its root. These commands also work in a checkout that has no other YumYums projects alongside it.
 
 ```sh
-git clone https://github.com/Vokinlemxela/yumyums-ui.git
-cd yumyums-ui
+git clone https://github.com/Vokinlemxela/yumyum-ui.git
+cd yumyum-ui
 npm ci
 npm run typecheck
 npm test

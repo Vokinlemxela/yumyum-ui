@@ -15,7 +15,7 @@ Audit date: 22 November 2026. The review covers package version `1.0.0`, the [au
 | `Badge`, `Spinner` | Status and loading indicators. Both appear on the website. The badge has a recording-specific `rec` variant. The spinner has a fixed 40 px size and the accessible name `Loading...`. |
 | `Slider` | A numeric range with `min`, `max` and `step`, used for detector settings in the VMS and volume in the player. It responds to arrows and Home/End. Its props and rendered element currently provide no way to associate an accessible name. |
 
-All nine controls work independently of a video engine. The package declares React and React DOM as peers. The controls use CSS variables with dark defaults and inject CSS into `document.head` from `useEffect`. With server rendering, these styles arrive after the client starts. [Control implementations and styles](./src/index.tsx) · [Package manifest](./package.json)
+All nine controls work independently of a video engine. The package declares React and React DOM as peers. The controls use CSS variables with dark defaults and inject CSS into `document.head` from `useEffect`. With server rendering, these styles arrive after the client starts. [Control implementations and styles](./src/primitives.tsx) · [Package manifest](./package.json)
 
 ## Where the player boundary lies
 
