@@ -97,9 +97,45 @@ export interface YumYumPlayerViewProps {
 const PLAYBACK_RATES = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 4, 16];
 
 const STRINGS = {
-  ru: { speed: 'Скорость', normal: 'Обычная', autoplay: 'Автовоспроизведение', loop: 'Повтор', live: 'В ЭФИРЕ', settings: 'Настройки', on: 'Вкл', off: 'Выкл', noVideo: 'Видео отсутствует', quality: 'Качество' },
-  en: { speed: 'Speed', normal: 'Normal', autoplay: 'Autoplay', loop: 'Loop', live: 'LIVE', settings: 'Settings', on: 'On', off: 'Off', noVideo: 'No video', quality: 'Quality' },
+  ru: {
+    speed: 'Скорость', normal: 'Обычная', autoplay: 'Автовоспроизведение',
+    loop: 'Повтор', live: 'В ЭФИРЕ', settings: 'Настройки', on: 'Вкл', off: 'Выкл',
+    noVideo: 'Видео отсутствует', quality: 'Качество', auto: 'Авто',
+    playbackError: 'Ошибка воспроизведения', loading: 'Загрузка видео',
+    play: 'Воспроизвести', pause: 'Пауза', mute: 'Выключить звук',
+    unmute: 'Включить звук', volume: 'Громкость', pip: 'Картинка в картинке',
+    fullscreen: 'Полноэкранный режим', exitFullscreen: 'Выйти из полноэкранного режима',
+  },
+  en: {
+    speed: 'Speed', normal: 'Normal', autoplay: 'Autoplay',
+    loop: 'Loop', live: 'LIVE', settings: 'Settings', on: 'On', off: 'Off',
+    noVideo: 'No video', quality: 'Quality', auto: 'Auto',
+    playbackError: 'Playback error', loading: 'Loading...',
+    play: 'Play', pause: 'Pause', mute: 'Mute', unmute: 'Unmute',
+    volume: 'Volume', pip: 'Picture in picture',
+    fullscreen: 'Fullscreen', exitFullscreen: 'Exit fullscreen',
+  },
 };
+
+type QualityOption = { id: string; label: string };
+
+type PipVideo = HTMLVideoElement & {
+  webkitSetPresentationMode?(mode: 'picture-in-picture' | 'inline'): void;
+  webkitPresentationMode?: string;
+};
+
+function preparePip(canvas: HTMLCanvasElement, video: PipVideo): boolean {
+  if (!video.srcObject) {
+    if (typeof canvas.captureStream !== 'function') return false;
+    try {
+      video.srcObject = canvas.captureStream(30);
+    } catch {
+      return false;
+    }
+  }
+  if (video.paused) video.play().catch(() => {});
+  return true;
+}
 
 // Затяжной сталл (тиков по 250мс), после которого вместо крутящегося лоадера
 // показываем заглушку «Видео отсутствует»: данных явно нет (дыра в записи,
@@ -306,13 +342,12 @@ export const YumYumPlayerView: React.FC<YumYumPlayerViewProps> = ({
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const pipVideoRef = useRef<HTMLVideoElement>(null);
+  const pipVideoRef = useRef<PipVideo>(null);
   const playerRef = useRef<PlayerHandle | null>(null);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scrubbing = useRef(false);
   const loopRef = useRef(false);
   const hoveredRef = useRef(false);
-  const pipPreppedRef = useRef(false); // PiP <video> mirror is live and ready
   // onReady kept in a ref so a changing callback prop doesn't re-run the
   // player-creation effect (and thus reload the stream).
   const onReadyRef = useRef(onReady);
@@ -328,8 +363,10 @@ export const YumYumPlayerView: React.FC<YumYumPlayerViewProps> = ({
   const [isLive, setIsLive] = useState(false);
   const [isBuffering, setIsBuffering] = useState(false);
   const [signalLost, setSignalLost] = useState(false);
-  const [qualityLevels, setQualityLevels] = useState<{ id: string; label: string; url: string; kind: string }[]>([]);
-  const [activeQuality, setActiveQuality] = useState<string>('auto');
+  const [qualityLevels, setQualityLevels] = useState<QualityOption[]>([]);
+  const [activeQuality, setActiveQuality] = useState('');
+  const [supportsAutoQuality, setSupportsAutoQuality] = useState(false);
+  const [qualityPending, setQualityPending] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -340,6 +377,7 @@ export const YumYumPlayerView: React.FC<YumYumPlayerViewProps> = ({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [pipSupported, setPipSupported] = useState(false);
+  const pipEnabled = chrome === 'full' && show('pip') && pipSupported;
 
   loopRef.current = loop;
 
@@ -358,10 +396,23 @@ export const YumYumPlayerView: React.FC<YumYumPlayerViewProps> = ({
     if (!canvasRef.current) return;
     setIsReady(false);
     setHasError(false);
+    setIsPlaying(false);
+    setIsLive(false);
+    setIsBuffering(false);
+    setSignalLost(false);
+    setQualityLevels([]);
+    setActiveQuality('');
+    setSupportsAutoQuality(false);
+    setQualityPending(false);
+    setCurrentTime(0);
+    setDuration(0);
+    setBuffered(0);
+    setScrubTime(null);
+    scrubbing.current = false;
     let mounted = true;
     let poll: ReturnType<typeof setInterval> | null = null;
     let created: PlayerHandle | null = null;
-    let onQualityChange: ((id: any) => void) | null = null;
+    let onQualityChange: ((id: unknown) => void) | null = null;
     let lastFrames = -1;
     let stallTicks = 0;
 
@@ -388,10 +439,13 @@ export const YumYumPlayerView: React.FC<YumYumPlayerViewProps> = ({
         player.mute(muted);
         if (rate !== 1) player.setPlaybackRate(rate);
 
-        onQualityChange = (id: any) => {
-          if (mounted) {
-            setActiveQuality(id as string);
-          }
+        onQualityChange = (id: unknown) => {
+          if (!mounted) return;
+          // An ABR event can report the rendition ID while the adapter stays in Auto.
+          const selection = player.getActiveQuality?.() || id;
+          if (typeof selection !== 'string') return;
+          setActiveQuality(selection);
+          if (selection === 'auto') setSupportsAutoQuality(true);
         };
 
         player.on('ended', onEnded);
@@ -402,11 +456,9 @@ export const YumYumPlayerView: React.FC<YumYumPlayerViewProps> = ({
         
         if (mounted) {
           setIsReady(true);
-          if (player.getQualityLevels) {
+          if (player.setQuality && player.getQualityLevels) {
             setQualityLevels(player.getQualityLevels());
-          }
-          if (player.getActiveQuality) {
-            setActiveQuality(player.getActiveQuality());
+            onQualityChange(undefined);
           }
         }
 
@@ -432,23 +484,11 @@ export const YumYumPlayerView: React.FC<YumYumPlayerViewProps> = ({
           setSignalLost(lost);
           lastFrames = tel.renderedFrames;
 
-          // Eagerly mirror the canvas into the off-screen PiP <video> once frames
-          // exist, and keep it playing. This is essential: requestPictureInPicture()
-          // must run synchronously inside the click gesture, so the stream must be
-          // ready *before* the user clicks (awaiting play()/metadata in the handler
-          // consumes the gesture and the browser rejects it).
-          if (!pipPreppedRef.current && tel.renderedFrames > 0) {
-            const cv = canvasRef.current as (HTMLCanvasElement & { captureStream?(fps?: number): MediaStream }) | null;
-            const vid = pipVideoRef.current;
-            if (cv && vid && typeof cv.captureStream === 'function') {
-              try {
-                const prev = vid.srcObject as MediaStream | null;
-                if (prev) prev.getTracks().forEach((tr) => tr.stop());
-                vid.srcObject = cv.captureStream(30);
-                vid.play().catch(() => {});
-                pipPreppedRef.current = true;
-              } catch { /* captureStream unsupported */ }
-            }
+          // Prepare the mirror before a click so PiP can use that gesture.
+          const video = pipVideoRef.current;
+          const canvas = canvasRef.current;
+          if (tel.renderedFrames > 0 && canvas && video && !video.srcObject) {
+            preparePip(canvas, video);
           }
         }, 250);
       } catch {
@@ -458,7 +498,6 @@ export const YumYumPlayerView: React.FC<YumYumPlayerViewProps> = ({
 
     return () => {
       mounted = false;
-      pipPreppedRef.current = false;
       if (poll) clearInterval(poll);
       if (created) {
         created.off('ended', onEnded);
@@ -489,7 +528,7 @@ export const YumYumPlayerView: React.FC<YumYumPlayerViewProps> = ({
     // the standard one (Chrome/Edge/Firefox) or WebKit's presentation-mode API
     // (Safari, which doesn't expose document.pictureInPictureEnabled).
     const canCapture =
-      typeof HTMLCanvasElement !== 'undefined' && 'captureStream' in HTMLCanvasElement.prototype;
+      typeof HTMLCanvasElement !== 'undefined' && typeof HTMLCanvasElement.prototype.captureStream === 'function';
     const standardPip =
       typeof document !== 'undefined' && document.pictureInPictureEnabled === true;
     const webkitPip =
@@ -505,7 +544,11 @@ export const YumYumPlayerView: React.FC<YumYumPlayerViewProps> = ({
     if (!p || hasError) return;
     p.unlockAudio?.().catch(() => {});
     if (isPlaying) { p.pause(); setIsPlaying(false); }
-    else { p.play().then(() => setIsPlaying(true)).catch(() => {}); }
+    else {
+      p.play().then(() => {
+        if (playerRef.current === p) setIsPlaying(true);
+      }).catch(() => {});
+    }
   }, [isPlaying, hasError]);
 
   const applyVolume = useCallback((v: number) => {
@@ -542,6 +585,23 @@ export const YumYumPlayerView: React.FC<YumYumPlayerViewProps> = ({
     playerRef.current?.setPlaybackRate(r);
   }, [K]);
 
+  const applyQuality = async (id: string) => {
+    const player = playerRef.current;
+    if (!player?.setQuality || qualityPending) return;
+    setQualityPending(true);
+    try {
+      await player.setQuality(id);
+      if (playerRef.current !== player) return;
+      const selection = player.getActiveQuality?.() || id;
+      setActiveQuality(selection);
+      if (selection === 'auto') setSupportsAutoQuality(true);
+    } catch {
+      // Keep the last confirmed selection if the adapter rejects the change.
+    } finally {
+      if (playerRef.current === player) setQualityPending(false);
+    }
+  };
+
   const relSeek = useCallback((delta: number) => {
     const p = playerRef.current;
     if (!p || isLive) return;
@@ -559,11 +619,8 @@ export const YumYumPlayerView: React.FC<YumYumPlayerViewProps> = ({
 
   const togglePip = useCallback(() => {
     const canvas = canvasRef.current;
-    const video = pipVideoRef.current as (HTMLVideoElement & {
-      webkitSetPresentationMode?(mode: 'picture-in-picture' | 'inline'): void;
-      webkitPresentationMode?: string;
-    }) | null;
-    if (!video) return;
+    const video = pipVideoRef.current;
+    if (!video || !canvas) return;
 
     // Already in PiP → leave it (standard API, then WebKit/Safari).
     if (document.pictureInPictureElement === video) {
@@ -575,15 +632,7 @@ export const YumYumPlayerView: React.FC<YumYumPlayerViewProps> = ({
       return;
     }
 
-    // Last-resort prep if the eager setup hasn't run yet (e.g. clicked very early).
-    if (!video.srcObject && canvas) {
-      const cv = canvas as HTMLCanvasElement & { captureStream?(fps?: number): MediaStream };
-      if (typeof cv.captureStream === 'function') {
-        try { video.srcObject = cv.captureStream(30); pipPreppedRef.current = true; } catch { /* noop */ }
-      }
-    }
-    // Keep the mirror playing so frames — and therefore metadata — start flowing.
-    video.play().catch(() => {});
+    if (!preparePip(canvas, video)) return;
 
     const request = () => {
       if (typeof video.requestPictureInPicture === 'function') {
@@ -607,24 +656,28 @@ export const YumYumPlayerView: React.FC<YumYumPlayerViewProps> = ({
     if (video.readyState >= 1 /* HAVE_METADATA */) {
       request();
     } else {
-      video.addEventListener('loadedmetadata', request, { once: true });
+      video.onloadedmetadata = () => {
+        video.onloadedmetadata = null;
+        request();
+      };
     }
   }, []);
 
-  // Exit PiP and release the captured MediaStream when the view unmounts.
-  useEffect(() => () => {
-    const video = pipVideoRef.current as (HTMLVideoElement & {
-      webkitSetPresentationMode?(mode: 'inline'): void;
-      webkitPresentationMode?: string;
-    }) | null;
-    try {
-      if (video && document.pictureInPictureElement === video) document.exitPictureInPicture().catch(() => {});
-      if (video?.webkitPresentationMode === 'picture-in-picture') video.webkitSetPresentationMode?.('inline');
-    } catch { /* noop */ }
-    const stream = video?.srcObject as MediaStream | null;
-    if (stream) stream.getTracks().forEach((tr) => tr.stop());
-    if (video) video.srcObject = null;
-  }, []);
+  useEffect(() => {
+    const video = pipVideoRef.current;
+    if (!pipEnabled || !video) return;
+
+    return () => {
+      video.onloadedmetadata = null;
+      try {
+        if (document.pictureInPictureElement === video) document.exitPictureInPicture().catch(() => {});
+        if (video.webkitPresentationMode === 'picture-in-picture') video.webkitSetPresentationMode?.('inline');
+      } catch { /* noop */ }
+      const stream = video.srcObject as MediaStream | null;
+      stream?.getTracks().forEach(track => track.stop());
+      video.srcObject = null;
+    };
+  }, [pipEnabled]);
 
   // ── Auto-hide controls while playing ──────────────────────────────
   const revealControls = useCallback(() => {
@@ -645,9 +698,10 @@ export const YumYumPlayerView: React.FC<YumYumPlayerViewProps> = ({
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const active = hoveredRef.current || document.fullscreenElement === containerRef.current;
-      if (!active) return;
+      if (!active || e.defaultPrevented) return;
       const tgt = e.target as HTMLElement | null;
-      if (tgt && /^(INPUT|TEXTAREA|SELECT)$/.test(tgt.tagName)) return;
+      if (tgt && (/^(INPUT|TEXTAREA|SELECT)$/.test(tgt.tagName)
+        || tgt.isContentEditable || (e.key === ' ' && tgt.closest('button')))) return;
       switch (e.key) {
         case ' ': case 'k': e.preventDefault(); togglePlay(); break;
         case 'ArrowLeft': e.preventDefault(); relSeek(-5); break;
@@ -685,7 +739,7 @@ export const YumYumPlayerView: React.FC<YumYumPlayerViewProps> = ({
       <canvas ref={canvasRef} className="yyv-canvas" onClick={togglePlay} />
 
       {/* Off-screen video used only as a PiP surface for the canvas stream */}
-      <video ref={pipVideoRef} muted playsInline className="yyv-pipvideo" />
+      {pipEnabled && <video ref={pipVideoRef} muted playsInline className="yyv-pipvideo" />}
 
       {((badges && badges.length > 0) || overlayTopLeft) && (
         <div className="yyv-overlay-tl">
@@ -704,12 +758,12 @@ export const YumYumPlayerView: React.FC<YumYumPlayerViewProps> = ({
 
       {(!isReady || isBuffering) && !hasError && (
         <div className="yyv-spin" style={{ color: accentColor }}>
-          <Spinner />
+          <Spinner aria-label={t.loading} />
         </div>
       )}
 
       {isReady && !isPlaying && !isBuffering && !hasError && (
-        <Button variant="ghost" className="yyv-center" onClick={togglePlay} aria-label="Play" style={{ color: accentColor }}>
+        <Button variant="ghost" className="yyv-center" onClick={togglePlay} aria-label={t.play} style={{ color: accentColor }}>
           <span style={{ display: 'flex', transform: 'scale(1.4)' }}><PlayIcon /></span>
         </Button>
       )}
@@ -718,7 +772,7 @@ export const YumYumPlayerView: React.FC<YumYumPlayerViewProps> = ({
         <div className="yyv-novideo">{t.noVideo}</div>
       )}
 
-      {hasError && <div className="yyv-error">Playback error</div>}
+      {hasError && <div className="yyv-error">{t.playbackError}</div>}
 
       {chrome !== 'none' && (
         <div
@@ -746,17 +800,18 @@ export const YumYumPlayerView: React.FC<YumYumPlayerViewProps> = ({
 
           <div className="yyv-row">
             {chrome !== 'minimal' && show('play') && (
-              <Button variant="ghost" className="yyv-btn" onClick={togglePlay} aria-label={isPlaying ? 'Pause' : 'Play'}>
+              <Button variant="ghost" className="yyv-btn" onClick={togglePlay} aria-label={isPlaying ? t.pause : t.play}>
                 {isPlaying ? <PauseIcon /> : <PlayIcon />}
               </Button>
             )}
 
             {show('volume') && (
               <div className="yyv-vol">
-                <Button variant="ghost" className="yyv-btn" onClick={toggleMute} aria-label={muted ? 'Unmute' : 'Mute'}>
+                <Button variant="ghost" className="yyv-btn" onClick={toggleMute} aria-label={muted ? t.unmute : t.mute}>
                   {muted ? <VolumeMuteIcon /> : <VolumeHighIcon />}
                 </Button>
                 <Slider
+                  aria-label={t.volume}
                   value={volPct}
                   onChange={(val) => applyVolume(val / 100)}
                   className="yyv-volrange"
@@ -773,7 +828,7 @@ export const YumYumPlayerView: React.FC<YumYumPlayerViewProps> = ({
             {chrome !== 'minimal' && <div className="yyv-spacer" />}
 
             {chrome !== 'minimal' && show('speed') && !show('settings') && (
-              <SpeedQuick rate={rate} accent={accentColor} onPick={applyRate} />
+              <SpeedQuick label={t.speed} rate={rate} accent={accentColor} onPick={applyRate} />
             )}
 
             {chrome !== 'minimal' && show('settings') && (
@@ -796,26 +851,25 @@ export const YumYumPlayerView: React.FC<YumYumPlayerViewProps> = ({
                     loop={loop}
                     qualityLevels={qualityLevels}
                     activeQuality={activeQuality}
+                    supportsAutoQuality={supportsAutoQuality}
+                    qualityPending={qualityPending}
                     onRate={applyRate}
                     onAutoplay={(v) => { setAutoplay(v); writeStore(K('autoplay'), v); }}
                     onLoop={(v) => { setLoop(v); writeStore(K('loop'), v); }}
-                    onQuality={(id) => {
-                      setActiveQuality(id);
-                      playerRef.current?.setQuality?.(id);
-                    }}
+                    onQuality={applyQuality}
                   />
                 )}
               </div>
             )}
 
-            {chrome !== 'minimal' && show('pip') && pipSupported && (
-              <Button variant="ghost" className="yyv-btn" onClick={togglePip} aria-label="Picture in picture">
+            {pipEnabled && (
+              <Button variant="ghost" className="yyv-btn" onClick={togglePip} aria-label={t.pip}>
                 <PipIcon />
               </Button>
             )}
 
             {show('fullscreen') && (
-              <Button variant="ghost" className="yyv-btn yyv-btn-fullscreen" onClick={toggleFullscreen} aria-label="Fullscreen">
+              <Button variant="ghost" className="yyv-btn yyv-btn-fullscreen" onClick={toggleFullscreen} aria-label={isFullscreen ? t.exitFullscreen : t.fullscreen}>
                 {isFullscreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
               </Button>
             )}
@@ -827,13 +881,13 @@ export const YumYumPlayerView: React.FC<YumYumPlayerViewProps> = ({
 };
 
 // Compact inline speed cycler used when the gear menu is hidden.
-const SpeedQuick: React.FC<{ rate: number; accent: string; onPick: (r: number) => void }> = ({ rate, accent, onPick }) => {
+const SpeedQuick: React.FC<{ label: string; rate: number; accent: string; onPick: (r: number) => void }> = ({ label, rate, accent, onPick }) => {
   const next = () => {
     const i = PLAYBACK_RATES.indexOf(rate);
     onPick(PLAYBACK_RATES[(i + 1) % PLAYBACK_RATES.length]);
   };
   return (
-    <Button variant="ghost" className="yyv-btn" onClick={next} style={{ font: '700 12px/1 ui-monospace,monospace', color: rate !== 1 ? accent : '#fff' }}>
+    <Button variant="ghost" className="yyv-btn" aria-label={`${label}: ${rate}×`} onClick={next} style={{ font: '700 12px/1 ui-monospace,monospace', color: rate !== 1 ? accent : '#fff' }}>
       {rate}×
     </Button>
   );
@@ -845,13 +899,15 @@ const SettingsMenu: React.FC<{
   rate: number;
   autoplay: boolean;
   loop: boolean;
-  qualityLevels: { id: string; label: string; url: string; kind: string }[];
+  qualityLevels: QualityOption[];
   activeQuality: string;
+  supportsAutoQuality: boolean;
+  qualityPending: boolean;
   onRate: (r: number) => void;
   onAutoplay: (v: boolean) => void;
   onLoop: (v: boolean) => void;
   onQuality: (id: string) => void;
-}> = ({ lang, accent, rate, autoplay, loop, qualityLevels, activeQuality, onRate, onAutoplay, onLoop, onQuality }) => {
+}> = ({ lang, accent, rate, autoplay, loop, qualityLevels, activeQuality, supportsAutoQuality, qualityPending, onRate, onAutoplay, onLoop, onQuality }) => {
   const t = STRINGS[lang];
   const Toggle: React.FC<{ label: string; on: boolean; onClick: () => void }> = ({ label, on, onClick }) => (
     <Button variant="ghost" className="yyv-mi" onClick={onClick}>
@@ -860,23 +916,24 @@ const SettingsMenu: React.FC<{
     </Button>
   );
 
-  const hasMultipleLevels = qualityLevels.length > 0;
-  const mappedActive = activeQuality === 'auto'
-    ? 'auto'
-    : (qualityLevels.find(l => l.id === activeQuality)?.kind || activeQuality);
+  const options = supportsAutoQuality && !qualityLevels.some(level => level.id === 'auto')
+    ? [{ id: 'auto', label: t.auto }, ...qualityLevels]
+    : qualityLevels;
 
   return (
     <div className="yyv-menu">
       <Toggle label={t.autoplay} on={autoplay} onClick={() => onAutoplay(!autoplay)} />
       <Toggle label={t.loop} on={loop} onClick={() => onLoop(!loop)} />
       
-      {hasMultipleLevels && (
+      {qualityLevels.length > 0 && (
         <>
           <div className="yyv-sep" />
           <div className="yyv-mlabel">{t.quality}</div>
           <div style={{ padding: '0 12px 6px 12px', boxSizing: 'border-box' }}>
             <select
-              value={mappedActive}
+              aria-label={t.quality}
+              value={activeQuality}
+              disabled={qualityPending}
               onChange={(e) => onQuality(e.target.value)}
               className="yyp-select"
               style={{
@@ -893,9 +950,7 @@ const SettingsMenu: React.FC<{
                 boxSizing: 'border-box'
               }}
             >
-              <option value="auto">Auto</option>
-              <option value="main">Main (High)</option>
-              <option value="sub">Sub (Low)</option>
+              {options.map(({ id, label }) => <option key={id} value={id}>{label}</option>)}
             </select>
           </div>
         </>

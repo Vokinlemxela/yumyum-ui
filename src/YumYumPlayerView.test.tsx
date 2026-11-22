@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
+import { act, render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { YumYumPlayerView, type PlayerHandle } from './YumYumPlayerView.js';
 
 // ====================================================================
@@ -267,5 +267,170 @@ describe('YumYumPlayerView scrubber → player.seek()', () => {
       unmount();
       expect(onReady).toHaveBeenLastCalledWith(null);
     });
+  });
+});
+
+describe('adapter controls', () => {
+  it('keeps Auto selected during ABR and lets the user switch back to it', async () => {
+    const { player } = makeMockPlayer({ playbackState: 'PAUSED' });
+    let selection = 'auto';
+    let onQualityChange: ((id: string) => void) | undefined;
+    vi.mocked(player.on).mockImplementation((event, callback) => {
+      if (event === 'qualitychange') onQualityChange = callback;
+    });
+    player.getQualityLevels = () => [
+      { id: '360p', label: '360p', url: '/360p', kind: 'sub' },
+      { id: '720p', label: 'HD 720p', url: '/720p', kind: 'main' },
+    ];
+    player.getActiveQuality = () => selection;
+    player.setQuality = vi.fn(async (id: string) => {
+      selection = id;
+      onQualityChange?.(id);
+    });
+    const ready = vi.fn();
+    render(<YumYumPlayerView createPlayer={async () => ({ player, isLive: false })} onReady={ready} />);
+    await waitFor(() => expect(ready).toHaveBeenCalledWith(player));
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+
+    const quality = screen.getByRole<HTMLSelectElement>('combobox', { name: 'Quality' });
+    expect(screen.getByRole('option', { name: 'HD 720p' })).toBeTruthy();
+    expect(quality.value).toBe('auto');
+    expect(onQualityChange).toBeDefined();
+    act(() => onQualityChange?.('720p'));
+    expect(quality.value).toBe('auto');
+
+    fireEvent.change(quality, { target: { value: '360p' } });
+    await waitFor(() => {
+      expect(quality.value).toBe('360p');
+      expect(quality.disabled).toBe(false);
+    });
+    expect(screen.getByRole('option', { name: 'Auto' })).toBeTruthy();
+    fireEvent.change(quality, { target: { value: 'auto' } });
+    await waitFor(() => expect(quality.value).toBe('auto'));
+    expect(vi.mocked(player.setQuality).mock.calls).toEqual([['360p'], ['auto']]);
+  });
+
+  it('hides quality when the current adapter cannot change it and localizes controls', async () => {
+    const { player } = makeMockPlayer({ playbackState: 'PAUSED' });
+    player.getQualityLevels = () => [{ id: '720p', label: '720p', url: '/720p', kind: 'main' }];
+    const createPlayer = vi.fn().mockResolvedValue({ player, isLive: false });
+    const failed = vi.fn().mockRejectedValue(new Error('Source unavailable'));
+    const onReady = vi.fn();
+    const { rerender } = render(<YumYumPlayerView createPlayer={createPlayer} lang="ru" onReady={onReady} />);
+    await waitFor(() => expect(onReady).toHaveBeenLastCalledWith(player));
+    expect(screen.getByRole('slider', { name: 'Громкость' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Настройки' }));
+    expect(screen.queryByRole('combobox', { name: 'Качество' })).toBeNull();
+
+    rerender(<YumYumPlayerView createPlayer={failed} lang="ru" onReady={onReady} />);
+    expect(await screen.findByText('Ошибка воспроизведения')).toBeTruthy();
+    expect(onReady.mock.calls).toEqual([[player], [null]]);
+    expect(player.destroy).toHaveBeenCalledTimes(1);
+  });
+
+  it('handles one volume step and no seek when an arrow is pressed on the focused volume slider', async () => {
+    const { player } = makeMockPlayer({ playbackState: 'PAUSED' });
+    const onReady = vi.fn();
+    const { container } = render(
+      <YumYumPlayerView createPlayer={async () => ({ player, isLive: false })} onReady={onReady} />,
+    );
+    await waitFor(() => expect(onReady).toHaveBeenCalledWith(player));
+    const slider = screen.getByRole('slider', { name: 'Volume' });
+    fireEvent.mouseMove(container.querySelector('.yyv-root')!);
+    slider.focus();
+    vi.mocked(player.setVolume).mockClear();
+    fireEvent.keyDown(slider, { key: 'ArrowRight' });
+    expect(vi.mocked(player.setVolume).mock.calls).toEqual([[0.01]]);
+    expect(player.seek).not.toHaveBeenCalled();
+  });
+});
+
+describe('Picture-in-Picture', () => {
+  function enablePipMock() {
+    const capture = vi.fn(() => ({ getTracks: () => [{ stop }] }));
+    const stop = vi.fn();
+    const request = vi.fn().mockResolvedValue(undefined);
+    const oldCapture = Object.getOwnPropertyDescriptor(HTMLCanvasElement.prototype, 'captureStream');
+    const oldEnabled = Object.getOwnPropertyDescriptor(document, 'pictureInPictureEnabled');
+    const oldRequest = Object.getOwnPropertyDescriptor(HTMLVideoElement.prototype, 'requestPictureInPicture');
+    Object.defineProperty(HTMLCanvasElement.prototype, 'captureStream', { configurable: true, value: capture });
+    Object.defineProperty(document, 'pictureInPictureEnabled', { configurable: true, value: true });
+    Object.defineProperty(HTMLVideoElement.prototype, 'requestPictureInPicture', { configurable: true, value: request });
+    vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined);
+    const restore = () => {
+      for (const [target, key, original] of [
+        [HTMLCanvasElement.prototype, 'captureStream', oldCapture],
+        [document, 'pictureInPictureEnabled', oldEnabled],
+        [HTMLVideoElement.prototype, 'requestPictureInPicture', oldRequest],
+      ] as const) {
+        if (original) Object.defineProperty(target, key, original);
+        else Reflect.deleteProperty(target, key);
+      }
+    };
+    return { capture, stop, request, restore };
+  }
+
+  it('revokes and replaces handles for hidden camera tiles without capturing the canvas', async () => {
+    const pip = enablePipMock();
+    const { player: oldPlayer } = makeMockPlayer({ renderedFrames: 30 });
+    const { player: nextPlayer } = makeMockPlayer({ renderedFrames: 30 });
+    const oldFactory = vi.fn().mockResolvedValue({ player: oldPlayer, isLive: true });
+    const nextFactory = vi.fn().mockResolvedValue({ player: nextPlayer, isLive: true });
+    const onReady = vi.fn();
+    const view = render(<YumYumPlayerView key="attempt-1" chrome="none" createPlayer={oldFactory} onReady={onReady} />);
+    try {
+      await waitFor(() => expect(oldPlayer.getTelemetry).toHaveBeenCalled());
+      view.rerender(<YumYumPlayerView key="attempt-2" chrome="none" createPlayer={nextFactory} onReady={onReady} />);
+      await waitFor(() => expect(nextPlayer.getTelemetry).toHaveBeenCalled());
+
+      expect(onReady.mock.calls).toEqual([[oldPlayer], [null], [nextPlayer]]);
+      expect(oldPlayer.destroy).toHaveBeenCalledTimes(1);
+      expect(nextFactory.mock.calls[0][0]).not.toBe(oldFactory.mock.calls[0][0]);
+      expect(screen.queryByRole('button', { name: 'Picture in picture' })).toBeNull();
+      expect(pip.capture).not.toHaveBeenCalled();
+
+      const replacement: PlayerHandle = onReady.mock.lastCall![0];
+      vi.mocked(nextPlayer.play).mockClear();
+      await replacement.play();
+      replacement.mute(false);
+      replacement.setVolume(0.4);
+      expect(nextPlayer.play).toHaveBeenCalledTimes(1);
+      expect(nextPlayer.mute).toHaveBeenLastCalledWith(false);
+      expect(nextPlayer.setVolume).toHaveBeenLastCalledWith(0.4);
+    } finally {
+      view.unmount();
+      pip.restore();
+    }
+  });
+
+  it('captures only with enabled full chrome and opens PiP on its first click', async () => {
+    const pip = enablePipMock();
+    const { player } = makeMockPlayer({ renderedFrames: 30 });
+    const createPlayer = vi.fn().mockResolvedValue({ player, isLive: false });
+    const view = render(<YumYumPlayerView createPlayer={createPlayer} controls={{ pip: false }} />);
+    try {
+      await waitFor(() => expect(player.getTelemetry).toHaveBeenCalled());
+      expect(pip.capture).not.toHaveBeenCalled();
+      view.rerender(<YumYumPlayerView createPlayer={createPlayer} chrome="minimal" />);
+      const polls = vi.mocked(player.getTelemetry).mock.calls.length;
+      await waitFor(() => expect(vi.mocked(player.getTelemetry).mock.calls.length).toBeGreaterThan(polls));
+      expect(pip.capture).not.toHaveBeenCalled();
+
+      view.rerender(<YumYumPlayerView createPlayer={createPlayer} />);
+      const button = screen.getByRole('button', { name: 'Picture in picture' });
+      await waitFor(() => expect(pip.capture).toHaveBeenCalledWith(30));
+      const video = view.container.querySelector('video')!;
+      Object.defineProperty(video, 'readyState', { value: 1 });
+      fireEvent.click(button);
+      expect(pip.request).toHaveBeenCalledTimes(1);
+
+      view.rerender(<YumYumPlayerView createPlayer={createPlayer} controls={{ pip: false }} />);
+      expect(pip.stop).toHaveBeenCalledTimes(1);
+      expect(video.srcObject).toBeNull();
+      expect(createPlayer).toHaveBeenCalledTimes(1);
+    } finally {
+      view.unmount();
+      pip.restore();
+    }
   });
 });

@@ -377,6 +377,8 @@ interface PlayerHandle {
 }
 ```
 
+The quality menu uses IDs and labels from `getQualityLevels()` when the handle also implements `setQuality(id)`. An adapter can expose Auto by returning an option with ID `auto` or reporting `auto` through `getActiveQuality()` or `qualitychange`. The getter is authoritative when an adaptive bitrate event reports the rendered rendition. Only full chrome with PiP enabled and browser support prepares a canvas mirror.
+
 ---
 
 ## Exports
