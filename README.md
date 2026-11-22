@@ -1,6 +1,6 @@
 **English** · [Русский](./README.ru.md)
 
-# @yumyums/ui
+# @yumyum-player/ui
 
 Fast, themeable **React UI primitives** and the YouTube-style **player shell**
 for [Yum-yum Player](https://github.com/Vokinlemxela/yumyum-player). Built for
@@ -9,11 +9,11 @@ dark-by-default design system with **native fonts only** (works offline / in
 isolated LANs), instant render, and no CSS build step.
 
 ```bash
-npm install @yumyums/ui
+npm install @yumyum-player/ui
 ```
 
 - **Primitives** — `Badge`, `Button`, `Slider`, `Spinner`, `Input`, `Checkbox`,
-  `Toggle`, `Select`, `TextArea`. Themeable via CSS variables; styles are
+  `Toggle`, `Select`, `TextArea`, `Field`. Themeable via CSS variables; styles are
   **auto-injected** (no CSS import, no bundler config).
 - **`<YumYumPlayerView>`** — full player chrome (timeline scrubber, volume,
   playback speed, autoplay/loop, Picture-in-Picture, fullscreen, hotkeys),
@@ -25,9 +25,29 @@ additionally expects `@yumyum-player/core` (or any object satisfying
 
 ---
 
+## Migrating to `@yumyum-player/ui` 2.0
+
+The package has moved from `@yumyums/ui` to `@yumyum-player/ui`. Replace the
+old dependency and update imports to the new scope. The root entry point
+retains the existing components and types. The original `@yumyums/ui@1.0.0`
+source is available at the [v1.0.0 tag]. The new scope previously shipped
+[`@yumyum-player/ui@1.0.5`].
+
+- Quality controls call `setQuality(id)` with IDs from `getQualityLevels()`.
+  Accept those IDs in adapters that previously handled only `main` and `sub`.
+  Expose `auto` in the options or report it through the active quality API
+  to offer automatic mode.
+- With `lang="ru"`, the controls use Russian accessible names. Update tests
+  and automation that select those controls by their former English names.
+
+[v1.0.0 tag]: https://github.com/Vokinlemxela/yumyum-ui/tree/v1.0.0
+[`@yumyum-player/ui@1.0.5`]: https://www.npmjs.com/package/@yumyum-player/ui/v/1.0.5
+
+---
+
 ## Design language
 
-`@yumyums/ui` implements the **yumyums** design system — industrial /
+`@yumyum-player/ui` implements the **yumyums** design system — industrial /
 utilitarian, function-first:
 
 - **Monospace as the UI voice**, not just for code — reads like an instrument.
@@ -48,7 +68,7 @@ utilitarian, function-first:
 ### Primitives
 
 ```tsx
-import { Button, Badge, Input, Toggle, Select, Slider } from '@yumyums/ui/primitives';
+import { Button, Badge, Input, Toggle, Select, Slider } from '@yumyum-player/ui/primitives';
 
 function Panel() {
   const [notify, setNotify] = useState(true);
@@ -80,7 +100,7 @@ once on first mount.
 ### Player view
 
 ```tsx
-import { YumYumPlayerView } from '@yumyums/ui/player';
+import { YumYumPlayerView } from '@yumyum-player/ui/player';
 import { YumYumPlayer } from '@yumyum-player/core';
 import { useCallback } from 'react';
 
@@ -105,7 +125,7 @@ server-rendered HTML before hydration, place the same stylesheet in the
 initial document head. The browser reuses it by ID.
 
 ```tsx
-import { primitivesCss, primitivesStyleId } from '@yumyums/ui/primitives/styles';
+import { primitivesCss, primitivesStyleId } from '@yumyum-player/ui/primitives/styles';
 
 // Inside <head>
 <style id={primitivesStyleId}>{primitivesCss}</style>
@@ -287,7 +307,7 @@ Pass the supplied props to the control. `Field` generates a stable ID when
 the host omits one. The host supplies the text and validation.
 
 ```tsx
-import { Field, Input } from '@yumyums/ui/primitives';
+import { Field, Input } from '@yumyum-player/ui/primitives';
 
 <Field label="Work email" description="Used to reply to your request" error={emailError}>
   {(props) => <Input {...props} type="email" value={email} onChange={onEmailChange} />}
@@ -397,7 +417,7 @@ The quality menu uses IDs and labels from `getQualityLevels()` when the handle a
 
 ## Exports
 
-Use `@yumyums/ui/primitives` for shared controls and `@yumyums/ui/player` for the video view and its types. The root entry point continues to export both.
+Use `@yumyum-player/ui/primitives` for shared controls and `@yumyum-player/ui/player` for the video view and its types. The root entry point continues to export both.
 
 The package ships ESM. In Node 18, use `import` or dynamic `import()`. A CommonJS caller can use `require()` on runtimes with synchronous ESM loading enabled.
 
@@ -416,7 +436,7 @@ YumYumPlayerViewProps, PlayerHandle, PlayerControlKey
 
 [Component audit and development roadmap](./ROADMAP.md)
 
-This repository contains the source for `@yumyums/ui`. The shared components depend on React and React DOM. To use the player controls with a playback engine, pass a stable `createPlayer` factory to `YumYumPlayerView`. The factory returns an object implementing `PlayerHandle`.
+This repository contains the source for `@yumyum-player/ui`. The shared components depend on React and React DOM. To use the player controls with a playback engine, pass a stable `createPlayer` factory to `YumYumPlayerView`. The factory returns an object implementing `PlayerHandle`.
 
 Clone this repository and run the checks from its root. These commands also work in a checkout that has no other YumYums projects alongside it.
 
@@ -431,7 +451,7 @@ npm run build
 
 Run `npm run dev` to rebuild the library as you edit. For a local consumer test, run `npm pack` after building and install the resulting `.tgz` in a test application.
 
-[CI](./.github/workflows/ci.yml) checks pull requests and pushes to `main`. To release a new UI version, update `package.json` and `package-lock.json`, commit the changes, then publish a GitHub Release tagged `vX.Y.Z` at the matching commit. The [npm workflow](./.github/workflows/publish.yml) builds and publishes that version of `@yumyums/ui`. Each consuming application selects its version and commits its own lockfile.
+[CI](./.github/workflows/ci.yml) checks pull requests and pushes to `main`. To release a new UI version, update `package.json` and `package-lock.json`, commit the changes, then publish a GitHub Release tagged `vX.Y.Z` at the matching commit. The [npm workflow](./.github/workflows/publish.yml) builds and publishes that version of `@yumyum-player/ui`. Each consuming application selects its version and commits its own lockfile.
 
 ## License
 

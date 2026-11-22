@@ -1,6 +1,6 @@
 [English](./README.md) · **Русский**
 
-# @yumyums/ui
+# @yumyum-player/ui
 
 Быстрые, темизируемые **React-примитивы** и **обвязка плеера** в стиле YouTube
 для [Yum-yum Player](https://github.com/Vokinlemxela/yumyum-player). Сделано для
@@ -9,11 +9,11 @@ monospace-first, тёмная по умолчанию, **только натив
 офлайн / в изолированной LAN), мгновенный рендер, без шага сборки CSS.
 
 ```bash
-npm install @yumyums/ui
+npm install @yumyum-player/ui
 ```
 
 - **Примитивы** — `Badge`, `Button`, `Slider`, `Spinner`, `Input`, `Checkbox`,
-  `Toggle`, `Select`, `TextArea`. Темизируются через CSS-переменные; стили
+  `Toggle`, `Select`, `TextArea`, `Field`. Темизируются через CSS-переменные; стили
   **вставляются сами** (не нужно импортировать CSS или настраивать сборщик).
 - **`<YumYumPlayerView>`** — полный хром плеера (таймлайн-скраббер, громкость,
   скорость, автоплей/повтор, Picture-in-Picture, fullscreen, хоткеи),
@@ -25,9 +25,28 @@ npm install @yumyums/ui
 
 ---
 
+## Переезд на `@yumyum-player/ui` 2.0
+
+Пакет переехал с `@yumyums/ui` на `@yumyum-player/ui`. Замените зависимость
+и обновите пути импорта. Корневая точка входа сохраняет существующие компоненты
+и типы. Исходники `@yumyums/ui@1.0.0` доступны по [тегу v1.0.0]. Под новым
+именем ранее выходил [`@yumyum-player/ui@1.0.5`].
+
+- Меню качества передаёт в `setQuality(id)` идентификаторы из
+  `getQualityLevels()`. Если адаптер принимал только `main` и `sub`, добавьте
+  поддержку ID уровней. Чтобы предложить автоматический режим, укажите
+  `auto` в списке уровней или сообщите его через API активного качества.
+- При `lang="ru"` у элементов управления русские доступные имена. Обновите
+  тесты и автоматизацию, которые ищут контролы по прежним английским именам.
+
+[тегу v1.0.0]: https://github.com/Vokinlemxela/yumyum-ui/tree/v1.0.0
+[`@yumyum-player/ui@1.0.5`]: https://www.npmjs.com/package/@yumyum-player/ui/v/1.0.5
+
+---
+
 ## Язык дизайна
 
-`@yumyums/ui` реализует дизайн-систему **yumyums** — industrial/utilitarian,
+`@yumyum-player/ui` реализует дизайн-систему **yumyums** — industrial/utilitarian,
 функция первична:
 
 - **Monospace как голос UI**, не только для кода — читается как «прибор».
@@ -47,7 +66,7 @@ npm install @yumyums/ui
 ### Примитивы
 
 ```tsx
-import { Button, Badge, Input, Toggle, Select, Slider } from '@yumyums/ui/primitives';
+import { Button, Badge, Input, Toggle, Select, Slider } from '@yumyum-player/ui/primitives';
 
 function Panel() {
   const [notify, setNotify] = useState(true);
@@ -79,7 +98,7 @@ function Panel() {
 ### Плеер-view
 
 ```tsx
-import { YumYumPlayerView } from '@yumyums/ui/player';
+import { YumYumPlayerView } from '@yumyum-player/ui/player';
 import { YumYumPlayer } from '@yumyum-player/core';
 import { useCallback } from 'react';
 
@@ -104,7 +123,7 @@ export function Player({ url }: { url: string }) {
 страницы. В браузере компоненты найдут её по ID.
 
 ```tsx
-import { primitivesCss, primitivesStyleId } from '@yumyums/ui/primitives/styles';
+import { primitivesCss, primitivesStyleId } from '@yumyum-player/ui/primitives/styles';
 
 // Inside the document head
 <style id={primitivesStyleId}>{primitivesCss}</style>
@@ -284,7 +303,7 @@ import { primitivesCss, primitivesStyleId } from '@yumyums/ui/primitives/styles'
 компонент создаёт его сам. Тексты и проверку значений задаёт приложение.
 
 ```tsx
-import { Field, Input } from '@yumyums/ui/primitives';
+import { Field, Input } from '@yumyum-player/ui/primitives';
 
 <Field label="Рабочая почта" description="На этот адрес придёт ответ" error={emailError}>
   {(props) => <Input {...props} type="email" value={email} onChange={onEmailChange} />}
@@ -393,7 +412,7 @@ interface PlayerHandle {
 
 ## Экспорты
 
-Общие контролы доступны через `@yumyums/ui/primitives`, видеооболочка и её типы — через `@yumyums/ui/player`. Корневая точка входа по-прежнему экспортирует и то, и другое.
+Общие контролы доступны через `@yumyum-player/ui/primitives`, видеооболочка и её типы — через `@yumyum-player/ui/player`. Корневая точка входа по-прежнему экспортирует и то, и другое.
 
 Пакет поставляется в формате ESM. В Node 18 используйте `import` или динамический `import()`. Из CommonJS можно вызывать `require()` в средах с включённой синхронной загрузкой ESM.
 
@@ -412,7 +431,7 @@ YumYumPlayerViewProps, PlayerHandle, PlayerControlKey
 
 [Аудит компонентов и план развития](./ROADMAP.ru.md)
 
-В этом репозитории находятся исходники `@yumyums/ui`. Общие компоненты используют React и React DOM. Чтобы подключить элементы управления к своему видеодвижку, передайте в `YumYumPlayerView` функцию `createPlayer` со стабильной ссылкой. Она возвращает объект, реализующий `PlayerHandle`.
+В этом репозитории находятся исходники `@yumyum-player/ui`. Общие компоненты используют React и React DOM. Чтобы подключить элементы управления к своему видеодвижку, передайте в `YumYumPlayerView` функцию `createPlayer` со стабильной ссылкой. Она возвращает объект, реализующий `PlayerHandle`.
 
 Склонируйте репозиторий и запустите проверки из его корня. Для этих команд достаточно отдельной копии библиотеки.
 
@@ -427,7 +446,7 @@ npm run build
 
 Команда `npm run dev` пересобирает библиотеку при редактировании. Чтобы проверить изменения в тестовом приложении, после сборки выполните `npm pack` и установите полученный файл `.tgz` в приложение.
 
-[CI](./.github/workflows/ci.yml) проверяет pull request и коммиты в `main`. Для выпуска новой версии UI обновите `package.json` и `package-lock.json`, закоммитьте изменения и опубликуйте GitHub Release с тегом `vX.Y.Z` на соответствующем коммите. [Workflow публикации](./.github/workflows/publish.yml) соберёт и опубликует эту версию `@yumyums/ui` в npm. Каждое приложение выбирает версию зависимости и фиксирует её в собственном lock-файле.
+[CI](./.github/workflows/ci.yml) проверяет pull request и коммиты в `main`. Для выпуска новой версии UI обновите `package.json` и `package-lock.json`, закоммитьте изменения и опубликуйте GitHub Release с тегом `vX.Y.Z` на соответствующем коммите. [Workflow публикации](./.github/workflows/publish.yml) соберёт и опубликует эту версию `@yumyum-player/ui` в npm. Каждое приложение выбирает версию зависимости и фиксирует её в собственном lock-файле.
 
 ## Лицензия
 

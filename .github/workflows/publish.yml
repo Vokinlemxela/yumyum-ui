@@ -1,9 +1,9 @@
-name: Publish to npm
+name: Publish @yumyum-player/ui to npm
 
-# Publishes @yumyums/ui to npm.
-# Trigger by creating a GitHub Release (tag it e.g. v1.0.0), or run manually.
+# Publishes @yumyum-player/ui to npm.
+# Trigger by creating a GitHub Release (tag it e.g. v2.0.0), or run manually.
 # Requires a repository secret NPM_TOKEN — an npm automation token with publish
-# rights to the @yumyums scope.
+# rights to the @yumyum-player scope.
 
 on:
   release:
