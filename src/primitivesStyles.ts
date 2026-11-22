@@ -75,6 +75,12 @@ textarea.yyp-input{height:auto;padding:8px 10px;line-height:1.5}
 .yyp-spinner{display:inline-flex;align-items:center;justify-content:center;pointer-events:none}
 .yyp-spinner-svg{animation:yyp-rot 1s linear infinite;height:40px;width:40px;color:var(--yyp-accent,#10b981)}
 
+/* ==================== FIELD ==================== */
+.yyp-field{display:grid;gap:6px;min-width:0}
+.yyp-field-label{color:var(--yyp-text,#f0f2f4)}
+.yyp-field-description{color:var(--yyp-text-2,#a9b2bb)}
+.yyp-field-error{color:var(--yyp-danger,#f4506a)}
+
 @keyframes yyp-rot{to{transform:rotate(360deg)}}
 @keyframes yyp-pulse{0%,100%{opacity:1}50%{opacity:.3}}
 @media (prefers-reduced-motion:reduce){

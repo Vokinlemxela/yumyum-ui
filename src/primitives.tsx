@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useId, useRef } from 'react';
 
 import { primitivesCss, primitivesStyleId } from './primitivesStyles.js';
 
@@ -324,3 +324,48 @@ export const TextArea: React.FC<TextAreaProps> = ({ className = '', ...props }) 
     />
   );
 };
+
+export interface FieldControlProps {
+  id: string;
+  'aria-describedby'?: string;
+  'aria-invalid'?: true;
+}
+
+export interface FieldProps {
+  id?: string;
+  label: React.ReactNode;
+  description?: React.ReactNode;
+  error?: React.ReactNode;
+  className?: string;
+  /** Apply the provided props to the labelable control. */
+  children: (controlProps: FieldControlProps) => React.ReactNode;
+}
+
+function hasFieldMessage(message: React.ReactNode): boolean {
+  return message != null && typeof message !== 'boolean' && message !== '';
+}
+
+export function Field({ id, label, description, error, className = '', children }: FieldProps) {
+  const generatedId = useId();
+  const controlId = id ?? generatedId;
+  const descriptionId = hasFieldMessage(description) ? `${controlId}-description` : undefined;
+  const errorId = hasFieldMessage(error) ? `${controlId}-error` : undefined;
+  const describedBy = [descriptionId, errorId].filter(Boolean).join(' ');
+
+  useEffect(() => {
+    ensureStyles();
+  }, []);
+
+  return (
+    <div className={`yyp-field ${className}`}>
+      <label className="yyp-field-label" htmlFor={controlId}>{label}</label>
+      {children({
+        id: controlId,
+        'aria-describedby': describedBy || undefined,
+        'aria-invalid': errorId ? true : undefined,
+      })}
+      {descriptionId && <div id={descriptionId} className="yyp-field-description">{description}</div>}
+      {errorId && <div id={errorId} className="yyp-field-error">{error}</div>}
+    </div>
+  );
+}

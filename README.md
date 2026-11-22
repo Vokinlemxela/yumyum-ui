@@ -280,6 +280,20 @@ to 40 pixels and the accessible name `Loading...`.
 {loading && <Spinner size={24} aria-label="Loading results" />}
 ```
 
+### `Field`
+
+Group a native control with its label, optional hint, and optional error.
+Pass the supplied props to the control. `Field` generates a stable ID when
+the host omits one. The host supplies the text and validation.
+
+```tsx
+import { Field, Input } from '@yumyums/ui/primitives';
+
+<Field label="Work email" description="Used to reply to your request" error={emailError}>
+  {(props) => <Input {...props} type="email" value={email} onChange={onEmailChange} />}
+</Field>
+```
+
 ---
 
 ## `<YumYumPlayerView>`
@@ -385,14 +399,16 @@ The quality menu uses IDs and labels from `getQualityLevels()` when the handle a
 
 Use `@yumyums/ui/primitives` for shared controls and `@yumyums/ui/player` for the video view and its types. The root entry point continues to export both.
 
+The package ships ESM. In Node 18, use `import` or dynamic `import()`. A CommonJS caller can use `require()` on runtimes with synchronous ESM loading enabled.
+
 ```ts
 // Components
-Badge, Button, Slider, Spinner, Input, Checkbox, Toggle, Select, TextArea,
+Badge, Button, Slider, Spinner, Input, Checkbox, Toggle, Select, TextArea, Field,
 YumYumPlayerView
 
 // Types
 BadgeProps, ButtonProps, SliderProps, SpinnerProps, InputProps, CheckboxProps, ToggleProps,
-SelectProps, TextAreaProps,
+SelectProps, TextAreaProps, FieldProps, FieldControlProps,
 YumYumPlayerViewProps, PlayerHandle, PlayerControlKey
 ```
 

@@ -277,6 +277,20 @@ import { primitivesCss, primitivesStyleId } from '@yumyums/ui/primitives/styles'
 {loading && <Spinner size={24} aria-label="Загрузка результатов" />}
 ```
 
+### `Field`
+
+Объединяет нативное поле с подписью, подсказкой и ошибкой. Передайте
+полю свойства, полученные от `Field`. Когда приложение не задаёт ID,
+компонент создаёт его сам. Тексты и проверку значений задаёт приложение.
+
+```tsx
+import { Field, Input } from '@yumyums/ui/primitives';
+
+<Field label="Рабочая почта" description="На этот адрес придёт ответ" error={emailError}>
+  {(props) => <Input {...props} type="email" value={email} onChange={onEmailChange} />}
+</Field>
+```
+
 ---
 
 ## `<YumYumPlayerView>`
@@ -381,14 +395,16 @@ interface PlayerHandle {
 
 Общие контролы доступны через `@yumyums/ui/primitives`, видеооболочка и её типы — через `@yumyums/ui/player`. Корневая точка входа по-прежнему экспортирует и то, и другое.
 
+Пакет поставляется в формате ESM. В Node 18 используйте `import` или динамический `import()`. Из CommonJS можно вызывать `require()` в средах с включённой синхронной загрузкой ESM.
+
 ```ts
 // Компоненты
-Badge, Button, Slider, Spinner, Input, Checkbox, Toggle, Select, TextArea,
+Badge, Button, Slider, Spinner, Input, Checkbox, Toggle, Select, TextArea, Field,
 YumYumPlayerView
 
 // Типы
 BadgeProps, ButtonProps, SliderProps, SpinnerProps, InputProps, CheckboxProps, ToggleProps,
-SelectProps, TextAreaProps,
+SelectProps, TextAreaProps, FieldProps, FieldControlProps,
 YumYumPlayerViewProps, PlayerHandle, PlayerControlKey
 ```
 
