@@ -165,7 +165,7 @@ export const Button: React.FC<ButtonProps> = ({
 };
 
 // ==================== SLIDER (VOLUME / TIMELINE) ====================
-export interface SliderProps {
+export interface SliderProps extends Pick<React.AriaAttributes, 'aria-label' | 'aria-labelledby'> {
   value: number;
   onChange: (value: number) => void;
   /** Диапазон значения. По умолчанию 0..100 (обратная совместимость). */
@@ -185,6 +185,8 @@ export const Slider: React.FC<SliderProps> = ({
   step = 1,
   disabled = false,
   className = '',
+  'aria-label': ariaLabel,
+  'aria-labelledby': ariaLabelledBy,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
@@ -214,7 +216,7 @@ export const Slider: React.FC<SliderProps> = ({
     updateValue(e);
   };
 
-  const handlePointerUp = (e: React.PointerEvent) => {
+  const finishDrag = (e: React.PointerEvent) => {
     if (!isDragging.current) return;
     isDragging.current = false;
     if (containerRef.current) {
@@ -254,10 +256,13 @@ export const Slider: React.FC<SliderProps> = ({
       ref={containerRef}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
+      onPointerUp={finishDrag}
+      onPointerCancel={finishDrag}
       onKeyDown={handleKeyDown}
       tabIndex={disabled ? -1 : 0}
       role="slider"
+      aria-label={ariaLabel}
+      aria-labelledby={ariaLabelledBy}
       aria-valuemin={min}
       aria-valuemax={max}
       aria-valuenow={value}
