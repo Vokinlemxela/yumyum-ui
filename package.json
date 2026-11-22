@@ -1,6 +1,6 @@
 {
   "name": "@yumyum-player/ui",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "General-purpose React design-system primitives (buttons, sliders, badges, spinner) plus YumYumPlayerView \u2014 reusable, framework-agnostic video-player chrome.",
   "author": "Vokinlemxela",
   "license": "MIT",
