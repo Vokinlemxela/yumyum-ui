@@ -100,7 +100,7 @@ const STRINGS = {
   ru: {
     speed: 'Скорость', normal: 'Обычная', autoplay: 'Автовоспроизведение',
     loop: 'Повтор', live: 'В ЭФИРЕ', settings: 'Настройки', on: 'Вкл', off: 'Выкл',
-    noVideo: 'Видео отсутствует', quality: 'Качество', auto: 'Авто',
+    noVideo: 'Видео отсутствует', quality: 'Качество', auto: 'Авто', chooseQuality: 'Выберите качество',
     playbackError: 'Ошибка воспроизведения', loading: 'Загрузка видео',
     play: 'Воспроизвести', pause: 'Пауза', mute: 'Выключить звук',
     unmute: 'Включить звук', volume: 'Громкость', pip: 'Картинка в картинке',
@@ -109,7 +109,7 @@ const STRINGS = {
   en: {
     speed: 'Speed', normal: 'Normal', autoplay: 'Autoplay',
     loop: 'Loop', live: 'LIVE', settings: 'Settings', on: 'On', off: 'Off',
-    noVideo: 'No video', quality: 'Quality', auto: 'Auto',
+    noVideo: 'No video', quality: 'Quality', auto: 'Auto', chooseQuality: 'Choose quality',
     playbackError: 'Playback error', loading: 'Loading...',
     play: 'Play', pause: 'Pause', mute: 'Mute', unmute: 'Unmute',
     volume: 'Volume', pip: 'Picture in picture',
@@ -348,6 +348,7 @@ export const YumYumPlayerView: React.FC<YumYumPlayerViewProps> = ({
   const scrubbing = useRef(false);
   const loopRef = useRef(false);
   const hoveredRef = useRef(false);
+  const qualityEventCount = useRef(0);
   // onReady kept in a ref so a changing callback prop doesn't re-run the
   // player-creation effect (and thus reload the stream).
   const onReadyRef = useRef(onReady);
@@ -443,7 +444,8 @@ export const YumYumPlayerView: React.FC<YumYumPlayerViewProps> = ({
           if (!mounted) return;
           // An ABR event can report the rendition ID while the adapter stays in Auto.
           const selection = player.getActiveQuality?.() || id;
-          if (typeof selection !== 'string') return;
+          if (typeof selection !== 'string' || !selection) return;
+          qualityEventCount.current += 1;
           setActiveQuality(selection);
           if (selection === 'auto') setSupportsAutoQuality(true);
         };
@@ -588,12 +590,17 @@ export const YumYumPlayerView: React.FC<YumYumPlayerViewProps> = ({
   const applyQuality = async (id: string) => {
     const player = playerRef.current;
     if (!player?.setQuality || qualityPending) return;
+    const eventCount = qualityEventCount.current;
     setQualityPending(true);
     try {
       await player.setQuality(id);
       if (playerRef.current !== player) return;
-      const selection = player.getActiveQuality?.() || id;
-      setActiveQuality(selection);
+      const selection = player.getActiveQuality?.();
+      if (selection) {
+        setActiveQuality(selection);
+      } else if (eventCount === qualityEventCount.current) {
+        setActiveQuality(id);
+      }
       if (selection === 'auto') setSupportsAutoQuality(true);
     } catch {
       // Keep the last confirmed selection if the adapter rejects the change.
@@ -919,6 +926,7 @@ const SettingsMenu: React.FC<{
   const options = supportsAutoQuality && !qualityLevels.some(level => level.id === 'auto')
     ? [{ id: 'auto', label: t.auto }, ...qualityLevels]
     : qualityLevels;
+  const selectedQuality = options.some(level => level.id === activeQuality) ? activeQuality : '';
 
   return (
     <div className="yyv-menu">
@@ -932,7 +940,7 @@ const SettingsMenu: React.FC<{
           <div style={{ padding: '0 12px 6px 12px', boxSizing: 'border-box' }}>
             <select
               aria-label={t.quality}
-              value={activeQuality}
+              value={selectedQuality}
               disabled={qualityPending}
               onChange={(e) => onQuality(e.target.value)}
               className="yyp-select"
@@ -950,6 +958,7 @@ const SettingsMenu: React.FC<{
                 boxSizing: 'border-box'
               }}
             >
+              {!selectedQuality && <option value="" disabled>{t.chooseQuality}</option>}
               {options.map(({ id, label }) => <option key={id} value={id}>{label}</option>)}
             </select>
           </div>

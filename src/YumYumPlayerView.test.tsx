@@ -310,6 +310,25 @@ describe('adapter controls', () => {
     expect(vi.mocked(player.setQuality).mock.calls).toEqual([['360p'], ['auto']]);
   });
 
+  it('can select the first quality level when the adapter has no active-quality getter', async () => {
+    const { player } = makeMockPlayer({ playbackState: 'PAUSED' });
+    player.getQualityLevels = () => [
+      { id: '360p', label: '360p', url: '/360p', kind: 'sub' },
+      { id: '720p', label: 'HD 720p', url: '/720p', kind: 'main' },
+    ];
+    player.setQuality = vi.fn().mockResolvedValue(undefined);
+    const onReady = vi.fn();
+    render(<YumYumPlayerView createPlayer={async () => ({ player, isLive: false })} onReady={onReady} />);
+    await waitFor(() => expect(onReady).toHaveBeenCalledWith(player));
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+
+    const quality = screen.getByRole<HTMLSelectElement>('combobox', { name: 'Quality' });
+    expect(quality.value).toBe('');
+    fireEvent.change(quality, { target: { value: '360p' } });
+    await waitFor(() => expect(quality.value).toBe('360p'));
+    expect(player.setQuality).toHaveBeenCalledWith('360p');
+  });
+
   it('hides quality when the current adapter cannot change it and localizes controls', async () => {
     const { player } = makeMockPlayer({ playbackState: 'PAUSED' });
     player.getQualityLevels = () => [{ id: '720p', label: '720p', url: '/720p', kind: 'main' }];
