@@ -357,6 +357,7 @@ export const YumYumPlayerView: React.FC<YumYumPlayerViewProps> = ({
   useEffect(() => {
     if (!canvasRef.current) return;
     setIsReady(false);
+    setHasError(false);
     let mounted = true;
     let poll: ReturnType<typeof setInterval> | null = null;
     let created: PlayerHandle | null = null;

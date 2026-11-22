@@ -225,6 +225,29 @@ describe('YumYumPlayerView scrubber → player.seek()', () => {
   });
 
   describe('onReady handle', () => {
+    it('recovers from a failed source and plays its replacement without remounting', async () => {
+      const sourceA = vi.fn().mockRejectedValue(new Error('Source A failed'));
+      const { player } = makeMockPlayer({ playbackState: 'PAUSED' });
+      const sourceB = vi.fn().mockResolvedValue({ player, isLive: false });
+      const onReady = vi.fn();
+      const { container, rerender } = render(
+        <YumYumPlayerView createPlayer={sourceA} onReady={onReady} />,
+      );
+      await screen.findByText('Playback error');
+      const canvas = container.querySelector('canvas');
+
+      rerender(<YumYumPlayerView createPlayer={sourceB} onReady={onReady} />);
+      await waitFor(() => expect(onReady).toHaveBeenLastCalledWith(player));
+      expect(canvas).toBeInstanceOf(HTMLCanvasElement);
+      expect(sourceB).toHaveBeenCalledWith(canvas);
+      expect(screen.queryByText('Playback error')).toBeNull();
+      expect(player.play).not.toHaveBeenCalled();
+
+      const play = screen.getAllByRole('button', { name: 'Play' })[0];
+      fireEvent.click(play);
+      expect(player.play).toHaveBeenCalledTimes(1);
+    });
+
     it('passes the player handle to onReady so the host can drive playback', async () => {
       const { player } = makeMockPlayer();
       const createPlayer = vi.fn().mockResolvedValue({ player, isLive: true });
