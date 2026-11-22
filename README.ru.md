@@ -382,6 +382,25 @@ SelectProps, TextAreaProps,
 YumYumPlayerViewProps, PlayerHandle, PlayerControlKey
 ```
 
+## Разработка и выпуск библиотеки
+
+В этом репозитории находятся исходники `@yumyums/ui`. Общие компоненты используют React и React DOM. Чтобы подключить элементы управления к своему видеодвижку, передайте в `YumYumPlayerView` функцию `createPlayer` со стабильной ссылкой. Она возвращает объект, реализующий `PlayerHandle`.
+
+Склонируйте репозиторий и запустите проверки из его корня. Для этих команд достаточно отдельной копии библиотеки.
+
+```sh
+git clone https://github.com/Vokinlemxela/yumyums-ui.git
+cd yumyums-ui
+npm ci
+npm run typecheck
+npm test
+npm run build
+```
+
+Команда `npm run dev` пересобирает библиотеку при редактировании. Чтобы проверить изменения в тестовом приложении, после сборки выполните `npm pack` и установите полученный файл `.tgz` в приложение.
+
+[CI](./.github/workflows/ci.yml) проверяет pull request и коммиты в `main`. Для выпуска новой версии UI обновите `package.json` и `package-lock.json`, закоммитьте изменения и опубликуйте GitHub Release с тегом `vX.Y.Z` на соответствующем коммите. [Workflow публикации](./.github/workflows/publish.yml) соберёт и опубликует эту версию `@yumyums/ui` в npm. Каждое приложение выбирает версию зависимости и фиксирует её в собственном lock-файле.
+
 ## Лицензия
 
 MIT — см. [LICENSE](./LICENSE).

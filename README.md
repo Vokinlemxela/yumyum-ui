@@ -386,6 +386,25 @@ SelectProps, TextAreaProps,
 YumYumPlayerViewProps, PlayerHandle, PlayerControlKey
 ```
 
+## Developing and releasing the UI library
+
+This repository contains the source for `@yumyums/ui`. The shared components depend on React and React DOM. To use the player controls with a playback engine, pass a stable `createPlayer` factory to `YumYumPlayerView`. The factory returns an object implementing `PlayerHandle`.
+
+Clone this repository and run the checks from its root. These commands also work in a checkout that has no other YumYums projects alongside it.
+
+```sh
+git clone https://github.com/Vokinlemxela/yumyums-ui.git
+cd yumyums-ui
+npm ci
+npm run typecheck
+npm test
+npm run build
+```
+
+Run `npm run dev` to rebuild the library as you edit. For a local consumer test, run `npm pack` after building and install the resulting `.tgz` in a test application.
+
+[CI](./.github/workflows/ci.yml) checks pull requests and pushes to `main`. To release a new UI version, update `package.json` and `package-lock.json`, commit the changes, then publish a GitHub Release tagged `vX.Y.Z` at the matching commit. The [npm workflow](./.github/workflows/publish.yml) builds and publishes that version of `@yumyums/ui`. Each consuming application selects its version and commits its own lockfile.
+
 ## License
 
 MIT — see [LICENSE](./LICENSE).
