@@ -465,6 +465,8 @@ YumYumPlayerViewProps, PlayerHandle, PlayerControlKey
 
 ## Разработка и выпуск библиотеки
 
+[История изменений](./CHANGELOG.md)
+
 [Аудит компонентов и план развития](./ROADMAP.ru.md)
 
 В этом репозитории находятся исходники `@yumyum-player/ui`. Общие компоненты используют React и React DOM. Чтобы подключить элементы управления к своему видеодвижку, передайте в `YumYumPlayerView` функцию `createPlayer` со стабильной ссылкой. Она возвращает объект, реализующий `PlayerHandle`.
