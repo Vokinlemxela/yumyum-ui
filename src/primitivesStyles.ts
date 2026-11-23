@@ -81,6 +81,15 @@ textarea.yyp-input{height:auto;padding:8px 10px;line-height:1.5}
 .yyp-field-description{color:var(--yyp-text-2,#a9b2bb)}
 .yyp-field-error{color:var(--yyp-danger,#f4506a)}
 
+/* ==================== DIALOG ==================== */
+.yyp-dialog{box-sizing:border-box;width:min(35rem,calc(100% - 2rem));max-height:calc(100% - 2rem);padding:0;overflow:auto;border:1px solid var(--yyp-border-strong,#3a424c);border-radius:var(--yyp-radius-sm,5px);background:var(--yyp-surface-2,#1e2228);color:var(--yyp-text,#f0f2f4)}
+.yyp-dialog::backdrop{background:rgba(0,0,0,.65)}
+.yyp-dialog-content{padding:1rem}
+.yyp-dialog-header{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:.75rem}
+.yyp-dialog-header h2{margin:0;font-size:1.125rem}
+.yyp-dialog-close{min-width:var(--yyp-control-h,32px);padding:0;font-size:1.25rem}
+.yyp-dialog-description{margin:0 0 .75rem;color:var(--yyp-text-2,#a9b2bb)}
+
 @keyframes yyp-rot{to{transform:rotate(360deg)}}
 @keyframes yyp-pulse{0%,100%{opacity:1}50%{opacity:.3}}
 @media (prefers-reduced-motion:reduce){

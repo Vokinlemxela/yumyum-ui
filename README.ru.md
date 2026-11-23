@@ -13,7 +13,7 @@ npm install @yumyum-player/ui
 ```
 
 - **Примитивы** — `Badge`, `Button`, `Slider`, `Spinner`, `Input`, `Checkbox`,
-  `Toggle`, `Select`, `TextArea`, `Field`. Темизируются через CSS-переменные; стили
+  `Toggle`, `Select`, `TextArea`, `Field`, `Dialog`. Темизируются через CSS-переменные; стили
   **вставляются сами** (не нужно импортировать CSS или настраивать сборщик).
 - **`<YumYumPlayerView>`** — полный хром плеера (таймлайн-скраббер, громкость,
   скорость, автоплей/повтор, Picture-in-Picture, fullscreen, хоткеи),
@@ -310,6 +310,42 @@ import { Field, Input } from '@yumyum-player/ui/primitives';
 </Field>
 ```
 
+### `Dialog`
+
+Управляемый модальный диалог с видимым заголовком, необязательным описанием
+и встроенной кнопкой закрытия. Приложение управляет `open`.
+Вызов `onClose(reason)` сообщает причину запроса на закрытие. Это может
+быть Escape, щелчок по фону или кнопка закрытия. Во время сохранения
+`dismissDisabled` блокирует эти запросы и отключает встроенную кнопку.
+На время сохранения отключите свои кнопки отмены. После успешного
+сохранения установите `open` в `false`.
+
+```tsx
+import { Dialog } from '@yumyum-player/ui/primitives';
+
+<Dialog
+  open={open}
+  title="Добавить камеру"
+  description="Укажите сетевой адрес камеры."
+  closeLabel="Закрыть настройки камеры"
+  initialFocusRef={addressRef}
+  dismissDisabled={saving}
+  onClose={() => setOpen(false)}
+>
+  <form onSubmit={saveCamera}>
+    <label>Адрес <input ref={addressRef} disabled={saving} required /></label>
+    <button disabled={saving}>Сохранить камеру</button>
+  </form>
+</Dialog>
+```
+
+С `closeOnBackdrop={false}` щелчок по фону оставляет диалог открытым.
+`initialFocusRef` задаёт начальный фокус. При закрытии фокус возвращается
+на ранее активный элемент или на указанный `returnFocusRef`. Нативный
+диалог блокирует взаимодействие с фоном, включая открытые диалоги под ним.
+Сервер отдаёт закрытую разметку. Диалог с исходным `open={true}` открывается
+после гидратации.
+
 ---
 
 ## `<YumYumPlayerView>`
@@ -418,12 +454,12 @@ interface PlayerHandle {
 
 ```ts
 // Компоненты
-Badge, Button, Slider, Spinner, Input, Checkbox, Toggle, Select, TextArea, Field,
+Badge, Button, Slider, Spinner, Input, Checkbox, Toggle, Select, TextArea, Field, Dialog,
 YumYumPlayerView
 
 // Типы
 BadgeProps, ButtonProps, SliderProps, SpinnerProps, InputProps, CheckboxProps, ToggleProps,
-SelectProps, TextAreaProps, FieldProps, FieldControlProps,
+SelectProps, TextAreaProps, FieldProps, FieldControlProps, DialogProps, DialogCloseReason,
 YumYumPlayerViewProps, PlayerHandle, PlayerControlKey
 ```
 

@@ -13,7 +13,7 @@ npm install @yumyum-player/ui
 ```
 
 - **Primitives** — `Badge`, `Button`, `Slider`, `Spinner`, `Input`, `Checkbox`,
-  `Toggle`, `Select`, `TextArea`, `Field`. Themeable via CSS variables; styles are
+  `Toggle`, `Select`, `TextArea`, `Field`, `Dialog`. Themeable via CSS variables; styles are
   **auto-injected** (no CSS import, no bundler config).
 - **`<YumYumPlayerView>`** — full player chrome (timeline scrubber, volume,
   playback speed, autoplay/loop, Picture-in-Picture, fullscreen, hotkeys),
@@ -314,6 +314,40 @@ import { Field, Input } from '@yumyum-player/ui/primitives';
 </Field>
 ```
 
+### `Dialog`
+
+A controlled modal with a visible title, optional description and built-in
+close button. The host owns `open`. Use `onClose(reason)` to handle Escape,
+backdrop and close-button requests. Set `dismissDisabled` while saving to
+block all three requests and disable the close button. Disable any custom
+cancel buttons during the same operation, and set `open` to false on success.
+
+```tsx
+import { Dialog } from '@yumyum-player/ui/primitives';
+
+<Dialog
+  open={open}
+  title="Add camera"
+  description="Enter the camera's network address."
+  closeLabel="Close camera setup"
+  initialFocusRef={addressRef}
+  dismissDisabled={saving}
+  onClose={() => setOpen(false)}
+>
+  <form onSubmit={saveCamera}>
+    <label>Address <input ref={addressRef} disabled={saving} required /></label>
+    <button disabled={saving}>Save camera</button>
+  </form>
+</Dialog>
+```
+
+Set `closeOnBackdrop={false}` to keep the dialog open when the backdrop is
+clicked. Focus goes to `initialFocusRef` when provided and returns to the
+previously focused element or explicit `returnFocusRef` on close. The native
+dialog keeps the background inert, including other open dialogs beneath it.
+Server rendering produces closed markup. An initially open dialog becomes
+modal after hydration.
+
 ---
 
 ## `<YumYumPlayerView>`
@@ -423,12 +457,12 @@ The package ships ESM. In Node 18, use `import` or dynamic `import()`. A CommonJ
 
 ```ts
 // Components
-Badge, Button, Slider, Spinner, Input, Checkbox, Toggle, Select, TextArea, Field,
+Badge, Button, Slider, Spinner, Input, Checkbox, Toggle, Select, TextArea, Field, Dialog,
 YumYumPlayerView
 
 // Types
 BadgeProps, ButtonProps, SliderProps, SpinnerProps, InputProps, CheckboxProps, ToggleProps,
-SelectProps, TextAreaProps, FieldProps, FieldControlProps,
+SelectProps, TextAreaProps, FieldProps, FieldControlProps, DialogProps, DialogCloseReason,
 YumYumPlayerViewProps, PlayerHandle, PlayerControlKey
 ```
 

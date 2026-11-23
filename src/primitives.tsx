@@ -1,15 +1,10 @@
 "use client";
 import React, { useEffect, useId, useRef } from 'react';
 
-import { primitivesCss, primitivesStyleId } from './primitivesStyles.js';
+import { ensureStyles } from './ensurePrimitivesStyles.js';
 
-function ensureStyles(): void {
-  if (typeof document === 'undefined' || document.getElementById(primitivesStyleId)) return;
-  const el = document.createElement('style');
-  el.id = primitivesStyleId;
-  el.textContent = primitivesCss;
-  document.head.appendChild(el);
-}
+export { Dialog } from './Dialog.js';
+export type { DialogCloseReason, DialogProps } from './Dialog.js';
 
 // ==================== PREMIUM BADGE ====================
 export interface BadgeProps {
