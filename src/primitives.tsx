@@ -5,6 +5,8 @@ import { ensureStyles } from './ensurePrimitivesStyles.js';
 
 export { Dialog } from './Dialog.js';
 export type { DialogCloseReason, DialogProps } from './Dialog.js';
+export { HelpTooltip } from './HelpTooltip.js';
+export type { HelpTooltipProps } from './HelpTooltip.js';
 
 // ==================== PREMIUM BADGE ====================
 export interface BadgeProps {

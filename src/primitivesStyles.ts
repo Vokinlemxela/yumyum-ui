@@ -90,6 +90,13 @@ textarea.yyp-input{height:auto;padding:8px 10px;line-height:1.5}
 .yyp-dialog-close{min-width:var(--yyp-control-h,32px);padding:0;font-size:1.25rem}
 .yyp-dialog-description{margin:0 0 .75rem;color:var(--yyp-text-2,#a9b2bb)}
 
+/* ==================== HELP TOOLTIP ==================== */
+.yyp-help{display:inline-flex;vertical-align:middle}
+.yyp-help-trigger{width:24px;height:24px;min-width:24px;padding:0;border:1px solid var(--yyp-border,#2c323a);border-radius:50%;font-size:12px}
+.yyp-help-tooltip{position:fixed;visibility:hidden;inset:auto;z-index:1000;box-sizing:border-box;width:max-content;max-width:min(18rem,var(--yyp-help-available-width,calc(100vw - 16px)));margin:0;padding:6px 9px;overflow:auto;overscroll-behavior:contain;white-space:normal;overflow-wrap:anywhere;border:1px solid var(--yyp-border-strong,#3a424c);border-radius:var(--yyp-radius-sm,5px);background:var(--yyp-surface-2,#1e2228);color:var(--yyp-text,#f0f2f4);font-size:.8125rem;line-height:1.4}
+.yyp-help-tooltip[data-positioned]{visibility:visible}
+.yyp-help-tooltip[hidden]{display:none}
+
 @keyframes yyp-rot{to{transform:rotate(360deg)}}
 @keyframes yyp-pulse{0%,100%{opacity:1}50%{opacity:.3}}
 @media (prefers-reduced-motion:reduce){

@@ -13,7 +13,7 @@ npm install @yumyum-player/ui
 ```
 
 - **Примитивы** — `Badge`, `Button`, `Slider`, `Spinner`, `Input`, `Checkbox`,
-  `Toggle`, `Select`, `TextArea`, `Field`, `Dialog`. Темизируются через CSS-переменные; стили
+  `Toggle`, `Select`, `TextArea`, `Field`, `Dialog`, `HelpTooltip`. Темизируются через CSS-переменные; стили
   **вставляются сами** (не нужно импортировать CSS или настраивать сборщик).
 - **`<YumYumPlayerView>`** — полный хром плеера (таймлайн-скраббер, громкость,
   скорость, автоплей/повтор, Picture-in-Picture, fullscreen, хоткеи),
@@ -346,6 +346,26 @@ import { Dialog } from '@yumyum-player/ui/primitives';
 Сервер отдаёт закрытую разметку. Диалог с исходным `open={true}` открывается
 после гидратации.
 
+### `HelpTooltip`
+
+Разместите кнопку со знаком вопроса рядом с подписью параметра. Передайте
+локализованное имя кнопки через `label`, а текст пояснения — через `text`.
+Кнопка и подпись поля располагаются рядом как отдельные элементы.
+
+```tsx
+import { HelpTooltip } from '@yumyum-player/ui/primitives';
+
+<span>Интервал ключевых кадров</span>
+<HelpTooltip label="Что такое интервал ключевых кадров?" text="Число кадров между ключевыми кадрами." />
+```
+
+Текст появляется при наведении или фокусе. Щелчок или касание закрепляет
+подсказку. Повторное нажатие, Escape или щелчок за пределами закрывают её.
+Можно перевести указатель на подсказку и продолжить чтение. Текст переносится
+на узком экране и связан с кнопкой через `aria-describedby`. `className`
+задаёт класс обёртки для компоновки. В браузерах с Popover API подсказка
+показывается поверх карточек, обрезающих содержимое.
+
 ---
 
 ## `<YumYumPlayerView>`
@@ -454,12 +474,12 @@ interface PlayerHandle {
 
 ```ts
 // Компоненты
-Badge, Button, Slider, Spinner, Input, Checkbox, Toggle, Select, TextArea, Field, Dialog,
+Badge, Button, Slider, Spinner, Input, Checkbox, Toggle, Select, TextArea, Field, Dialog, HelpTooltip,
 YumYumPlayerView
 
 // Типы
 BadgeProps, ButtonProps, SliderProps, SpinnerProps, InputProps, CheckboxProps, ToggleProps,
-SelectProps, TextAreaProps, FieldProps, FieldControlProps, DialogProps, DialogCloseReason,
+SelectProps, TextAreaProps, FieldProps, FieldControlProps, DialogProps, DialogCloseReason, HelpTooltipProps,
 YumYumPlayerViewProps, PlayerHandle, PlayerControlKey
 ```
 

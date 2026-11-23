@@ -1,6 +1,6 @@
 "use client";
 
-export { Badge, Button, Checkbox, Dialog, Field, Input, Select, Slider, Spinner, TextArea, Toggle } from './primitives.js';
+export { Badge, Button, Checkbox, Dialog, Field, HelpTooltip, Input, Select, Slider, Spinner, TextArea, Toggle } from './primitives.js';
 export type {
   BadgeProps,
   ButtonProps,
@@ -9,6 +9,7 @@ export type {
   DialogProps,
   FieldControlProps,
   FieldProps,
+  HelpTooltipProps,
   InputProps,
   SelectProps,
   SliderProps,

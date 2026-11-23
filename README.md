@@ -13,7 +13,7 @@ npm install @yumyum-player/ui
 ```
 
 - **Primitives** — `Badge`, `Button`, `Slider`, `Spinner`, `Input`, `Checkbox`,
-  `Toggle`, `Select`, `TextArea`, `Field`, `Dialog`. Themeable via CSS variables; styles are
+  `Toggle`, `Select`, `TextArea`, `Field`, `Dialog`, `HelpTooltip`. Themeable via CSS variables; styles are
   **auto-injected** (no CSS import, no bundler config).
 - **`<YumYumPlayerView>`** — full player chrome (timeline scrubber, volume,
   playback speed, autoplay/loop, Picture-in-Picture, fullscreen, hotkeys),
@@ -348,6 +348,26 @@ dialog keeps the background inert, including other open dialogs beneath it.
 Server rendering produces closed markup. An initially open dialog becomes
 modal after hydration.
 
+### `HelpTooltip`
+
+Place a question-mark button beside the setting it explains. Pass a localized
+`label` for the button and plain localized `text` for the tooltip. Keep the
+button next to the field label so both controls retain their own semantics.
+
+```tsx
+import { HelpTooltip } from '@yumyum-player/ui/primitives';
+
+<span>Keyframe interval</span>
+<HelpTooltip label="What is the keyframe interval?" text="The number of frames between keyframes." />
+```
+
+The text appears on hover or focus. Click or tap to pin it, then activate
+the button again, press Escape or click outside to dismiss it. The text
+remains visible while the pointer moves onto it. The tooltip wraps at narrow
+viewport widths and is linked to the button through `aria-describedby`.
+Use `className` on the wrapper for layout. For clipping ancestors, the
+component uses the browser's Popover API when available.
+
 ---
 
 ## `<YumYumPlayerView>`
@@ -457,12 +477,12 @@ The package ships ESM. In Node 18, use `import` or dynamic `import()`. A CommonJ
 
 ```ts
 // Components
-Badge, Button, Slider, Spinner, Input, Checkbox, Toggle, Select, TextArea, Field, Dialog,
+Badge, Button, Slider, Spinner, Input, Checkbox, Toggle, Select, TextArea, Field, Dialog, HelpTooltip,
 YumYumPlayerView
 
 // Types
 BadgeProps, ButtonProps, SliderProps, SpinnerProps, InputProps, CheckboxProps, ToggleProps,
-SelectProps, TextAreaProps, FieldProps, FieldControlProps, DialogProps, DialogCloseReason,
+SelectProps, TextAreaProps, FieldProps, FieldControlProps, DialogProps, DialogCloseReason, HelpTooltipProps,
 YumYumPlayerViewProps, PlayerHandle, PlayerControlKey
 ```
 
